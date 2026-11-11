@@ -1,0 +1,7 @@
+# Factory control surface. Agents never merge changes here; a human code owner must approve.
+# Only enforced once branch protection on main requires "Review from Code Owners".
+/factory/            @rokorobot
+/.github/            @rokorobot
+/AGENTS.md           @rokorobot
+/CLAUDE.md           @rokorobot
+/skills/             @rokorobot
