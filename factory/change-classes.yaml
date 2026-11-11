@@ -226,6 +226,7 @@ classes:
     autonomy: L0
     max_autonomy: L1
     paths: [factory]
+    max_diff_lines: 500        # owner decision 2026-11-11. Policy files cross-reference each other and a human always reads them.
     gates: [base]
     notes: L0 now. At L1 only the weekly Harness Improver may propose. A human always merges.
 
