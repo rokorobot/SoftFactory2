@@ -3,7 +3,7 @@
 This repo designs and builds a software factory: agents that build software under human-owned rules. Design rationale: `SOFTWARE_FACTORY_PREPLAN.md`.
 
 ## Hard rules
-- Never edit `factory/`, `.github/`, `AGENTS.md`, `CLAUDE.md`, or `skills/` unless your task's change class is `factory`. Those changes need a human code owner.
+- Never edit `factory/`, `templates/`, `.github/`, `AGENTS.md`, `CLAUDE.md`, or `skills/` unless your task's change class is `factory`. Those changes need a human code owner.
 - Never edit the `specs`, `infra`, `sensor_config`, or `flag_config` paths listed in `factory/project.yaml` unless your change class is `specs` or `infra-ci`.
 - Every PR description follows `factory/PR_REPORT_TEMPLATE.md`. Every section is filled in; claim only what you ran.
 - Classify your change with `factory/change-classes.yaml`. If several classes match, use the riskiest one.

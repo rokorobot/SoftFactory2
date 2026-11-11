@@ -37,6 +37,11 @@ describe("parseNoteInput", () => {
     );
   });
 
+  it("says 'input' when the whole payload is wrong", () => {
+    const result = parseNoteInput(null);
+    expect(result.ok === false && result.errors[0]).toMatch(/^input: /);
+  });
+
   it("names the field in the error", () => {
     const result = parseNoteInput({ title: "" });
     expect(result).toEqual({ ok: false, errors: ["title: title is required"] });

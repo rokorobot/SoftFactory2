@@ -5,10 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
-    "check": "scripts/check",
-    "test": "scripts/test-all",
-    "test:changed": "scripts/test-changed"
+    "start": "next start"
   },
   "dependencies": {
     "@prisma/adapter-pg": "7.10.1",
@@ -20,6 +17,9 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.6",
+    "@playwright/test": "1.65.0",
+    "@stryker-mutator/core": "10.1.1",
+    "@stryker-mutator/vitest-runner": "10.1.1",
     "@types/node": "24.19.2",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",

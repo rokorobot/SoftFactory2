@@ -10,7 +10,7 @@ trap cleanup EXIT
 
 expect_reject() { # name, file, content, expected text in the gate's output, command...
   local name="$1" file="$2" content="$3" expected="$4" out; shift 4
-  cleanup; mkdir -p "$(dirname "$file")"; printf '%s\n' "$content" > "$file"
+  mkdir -p "$(dirname "$file")"; printf '%s\n' "$content" > "$file"
   if out="$("$@" 2>&1)"; then
     echo "FAIL  $name: the gate accepted a planted defect"; failures=$((failures + 1))
   elif ! grep -q -- "$expected" <<<"$out"; then
@@ -22,25 +22,27 @@ expect_reject() { # name, file, content, expected text in the gate's output, com
   cleanup
 }
 
-biome() { npx biome ci --error-on-warnings --colors=off .; }
-types() { npx prisma generate >/dev/null && npx tsc --noEmit; }
-bounds() { npx depcruise src --config .dependency-cruiser.cjs; }
+format() { scripts/check format; }
+lint() { scripts/check lint; }
+types() { scripts/check typecheck; }
+bounds() { scripts/check structural_lint; }
 tests() { npx vitest run; }
+mutation() { npx stryker run --mutate "$BAD_DIR/calc.ts"; }
 
 expect_reject "format: unformatted code" "$BAD_DIR/index.ts" \
-  'export   const x = {a:1,b:2}' "format" biome
+  'export   const x = {a:1,b:2}' "index.ts" format
 expect_reject "lint: explicit any" "$BAD_DIR/index.ts" \
   'export function f(value: any): string {
   return String(value);
-}' "noExplicitAny" biome
+}' "noExplicitAny" lint
 expect_reject "lint: ts-ignore comment" "$BAD_DIR/index.ts" \
   '// @ts-ignore
-export const n: number = 1;' "noTsIgnore" biome
+export const n: number = 1;' "noTsIgnore" lint
 expect_reject "lint: unhandled promise" "$BAD_DIR/index.ts" \
   'async function save(): Promise<void> {}
 export function run(): void {
   save();
-}' "noFloatingPromises" biome
+}' "noFloatingPromises" lint
 expect_reject "typecheck: wrong type" "$BAD_DIR/index.ts" \
   'export const n: number = "one";' "TS2322" types
 expect_reject "typecheck: unchecked index access" "$BAD_DIR/index.ts" \
@@ -58,6 +60,16 @@ expect_reject "tests: a failing unit test" "$BAD_DIR/bad.test.ts" \
 it("fails", () => {
   expect(1).toBe(2);
 });' "bad.test.ts" tests
+
+# A test that runs the code but checks nothing passes the test gate. Mutation testing must catch it.
+cleanup; mkdir -p "$BAD_DIR"
+printf '%s\n' 'export function isAdult(age: number): boolean {' '  return age >= 18;' '}' > "$BAD_DIR/calc.ts"
+expect_reject "mutation: a test that asserts nothing" "$BAD_DIR/calc.test.ts" \
+  'import { expect, it } from "vitest";
+import { isAdult } from "./calc";
+it("runs", () => {
+  expect(typeof isAdult(20)).toBe("boolean");
+});' "under breaking threshold" mutation
 
 if [ "$failures" -gt 0 ]; then
   echo "gates-selftest: $failures gate(s) accepted a planted defect." >&2
