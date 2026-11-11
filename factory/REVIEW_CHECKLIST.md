@@ -17,7 +17,7 @@ The Reviewer agent reads this file and nothing else for review criteria. It runs
 - Items that do not apply to the class are left out. `N/A` on an item that does apply needs a one-line reason.
 - Do not invent items. Observations outside this list go under "Other observations", capped at 3, and are never blocking. One that keeps coming back should become an item.
 - Do not suggest style changes the formatter or linter would catch. Those are sensors, not review.
-- Post the report as your own comment on the PR, tied to the commit you reviewed. Never write it into the PR description, which the author can edit.
+- Deliver the report the way your runner tells you: a file that a workflow step posts, or your own comment. It is always tied to the commit you reviewed. It never goes into the PR description, which the author can edit.
 - You are advisory. You never approve or merge.
 
 ## Severity
@@ -109,3 +109,4 @@ The Reviewer is itself a sensor and has to be tested (preplan 1.5). The numbers 
 Record every add, change, or retirement with date and the incident or PR that caused it.
 - 2026-11-11: initial draft from the preplan. Not yet calibrated against human reviews.
 - 2026-11-11: review against the preplan, before first use. Added Applies-to and Source columns, moved deterministic checks to CI gates, added B5, D6 and the calibration section. Split G3 into G3 (complete, WARN) and G4 (true, BLOCK). C4 raised from NOTE to BLOCK to match the `mutation_changed` gate.
+- 2026-11-11: Reviewer now runs through claude-code-action with no shell or GitHub access; a workflow step posts its report. Delivery rule reworded to match.
