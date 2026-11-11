@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# Start the app locally on http://localhost:3000.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+exec npx next dev

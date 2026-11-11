@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+# Proves the gates can fail. Plants one known-bad file per gate and requires the gate to reject it.
+# A gate that passes a planted defect is broken: fix the gate, not this script.
+set -uo pipefail
+cd "$(dirname "$0")/.."
+BAD_DIR=src/domain/selftest_bad
+failures=0
+cleanup() { rm -rf "$BAD_DIR" src/app/selftest_bad.ts; }
+trap cleanup EXIT
+
+expect_reject() { # name, file, content, expected text in the gate's output, command...
+  local name="$1" file="$2" content="$3" expected="$4" out; shift 4
+  cleanup; mkdir -p "$(dirname "$file")"; printf '%s\n' "$content" > "$file"
+  if out="$("$@" 2>&1)"; then
+    echo "FAIL  $name: the gate accepted a planted defect"; failures=$((failures + 1))
+  elif ! grep -q -- "$expected" <<<"$out"; then
+    echo "FAIL  $name: rejected, but not for the planted reason (no '$expected' in output)"
+    failures=$((failures + 1))
+  else
+    echo "ok    $name: rejected ($expected)"
+  fi
+  cleanup
+}
+
+biome() { npx biome ci --error-on-warnings --colors=off .; }
+types() { npx tsc --noEmit; }
+bounds() { npx depcruise src --config .dependency-cruiser.cjs; }
+tests() { npx vitest run; }
+
+expect_reject "format: unformatted code" "$BAD_DIR/index.ts" \
+  'export   const x = {a:1,b:2}' "format" biome
+expect_reject "lint: explicit any" "$BAD_DIR/index.ts" \
+  'export function f(value: any): string {
+  return String(value);
+}' "noExplicitAny" biome
+expect_reject "lint: ts-ignore comment" "$BAD_DIR/index.ts" \
+  '// @ts-ignore
+export const n: number = 1;' "noTsIgnore" biome
+expect_reject "lint: unhandled promise" "$BAD_DIR/index.ts" \
+  'async function save(): Promise<void> {}
+export function run(): void {
+  save();
+}' "noFloatingPromises" biome
+expect_reject "typecheck: wrong type" "$BAD_DIR/index.ts" \
+  'export const n: number = "one";' "TS2322" types
+expect_reject "typecheck: unchecked index access" "$BAD_DIR/index.ts" \
+  'export function first(items: string[]): string {
+  return items[0];
+}' "TS2322" types
+expect_reject "boundaries: domain imports a framework" "$BAD_DIR/index.ts" \
+  'import { NextResponse } from "next/server";
+export const r = NextResponse;' "domain-is-pure" bounds
+expect_reject "boundaries: reaching into a module's internals" "src/app/selftest_bad.ts" \
+  'import { parseNoteInput } from "@/domain/notes/note";
+export const p = parseNoteInput;' "domain-module-public-api" bounds
+expect_reject "tests: a failing unit test" "$BAD_DIR/bad.test.ts" \
+  'import { expect, it } from "vitest";
+it("fails", () => {
+  expect(1).toBe(2);
+});' "bad.test.ts" tests
+
+if [ "$failures" -gt 0 ]; then
+  echo "gates-selftest: $failures gate(s) accepted a planted defect." >&2
+  exit 1
+fi
+echo "gates-selftest: every planted defect was rejected"

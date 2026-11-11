@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Static gates: format, lint, typecheck, structural_lint. Run before every commit.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+echo "== format + lint (biome)"
+npx biome ci --error-on-warnings --colors=off .
+echo "== typecheck (tsc)"
+npx next typegen
+npx tsc --noEmit
+echo "== module boundaries (dependency-cruiser)"
+npx depcruise src --config .dependency-cruiser.cjs
+echo "check: all static gates passed"
