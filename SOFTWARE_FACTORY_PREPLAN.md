@@ -1,6 +1,6 @@
 # Software Factory: State of the Art and Ideal-Case Stack Preplan
 
-Compiled 2026-11-11. Sources: André Staltz, Birgitta Böckeler (Thoughtworks / martinfowler.com), Simon Willison, Mitchell Hashimoto, Steve Yegge, Dex Horthy, Addy Osmani, Andrej Karpathy, StrongDM's factory team, Anthropic's Claude Code guidance, and the Sawyer Middeleer study of seven operating factories (Spotify, Stripe, Anthropic, Ramp, WorkOS, Uber, Monzo). Links at the end.
+Compiled 2026-11-11. Amended 2026-11-11: templates (Layer 0) and `project.yaml` (Layer 1), after the owner decided the factory builds software in general. Sources: André Staltz, Birgitta Böckeler (Thoughtworks / martinfowler.com), Simon Willison, Mitchell Hashimoto, Steve Yegge, Dex Horthy, Addy Osmani, Andrej Karpathy, StrongDM's factory team, Anthropic's Claude Code guidance, and the Sawyer Middeleer study of seven operating factories (Spotify, Stripe, Anthropic, Ramp, WorkOS, Uber, Monzo). Links at the end.
 
 ---
 
@@ -21,6 +21,7 @@ Where sources disagree, I say so. Where they agree, treat it as settled.
 - **Steering loop:** every recurring agent mistake becomes a new guide or sensor. This is the actual job of the factory operator. Hashimoto calls the same thing "harness engineering": build the tool that stops the repeat mistake.
 - **Keep quality left:** fast checks before commit, expensive checks (mutation testing, architecture review) in the pipeline.
 - **Harnessability matters:** typed languages, explicit module boundaries, opinionated frameworks shrink the agent's output space (Ashby's law). Pick your stack for how constrainable it is.
+- **Harness templates (Böckeler):** most organizations need only a few service topologies. A harness template is "a bundle of guides and sensors that leash a coding agent to the structure, conventions and tech stack of a topology." She presents this as a likely future development, not established practice, and warns that templates are hard to version and keep in sync.
 
 ### 1.3 Fail closed, narrow scope, pristine environment
 - **Staltz #12:** agents must not hack around constraints. A missing tool or broken env is a bug; the agent should stop, not improvise.
@@ -63,7 +64,7 @@ Where sources disagree, I say so. Where they agree, treat it as settled.
 
 ## Part 2. Ideal-case stack preplan
 
-Opinionated. Assumes a small team (1-5 humans), a GitHub monorepo or few repos, and willingness to spend on cloud agents. Tools named are the ones with the strongest track record as of now; swap equivalents freely, keep the layer.
+Opinionated. Assumes a small team (1-5 humans), GitHub, and willingness to spend on cloud agents. The factory builds software in general: the factory lives in one repo, and each product gets its own repo, created from a template. Tools named are the ones with the strongest track record as of now; swap equivalents freely, keep the layer.
 
 ### Layer 0. Codebase made harnessable (do this first, before any automation)
 | Decision | Choice | Why |
@@ -75,12 +76,22 @@ Opinionated. Assumes a small team (1-5 humans), a GitHub monorepo or few repos, 
 | Tests | Fast unit suite under 2 min, filtered runner script (`scripts/test-changed`) | Agents loop on it |
 | Scripts | `scripts/` for every repeated action: screenshot, run-filtered-tests, seed-db, smoke | Hashimoto's harness engineering |
 
+**Templates: Layer 0, decided once per kind of product**
+- Every product repo starts from a prepared template in `templates/<name>/` in the factory repo, protected like `factory/`. A template is the table above already decided and wired: stack, lint and boundary rules, test setup, scripts, CI gates, and a filled-in `factory/project.yaml`.
+- The factory selects a template. It never invents one. A generated scaffold would have the agent writing the sensors that judge its own work.
+- Triage picks the template from a short decision table (web app, service or CLI, data work). A human confirms it when approving the spec.
+- A script creates the product repo from the template. No LLM in that step.
+- New templates arrive as `factory`-class PRs. An agent may draft one when a product fits none; a human approves it.
+- Build one template first. Add the next only when a real product needs it; a template no product has shipped on is untested.
+- A scheduled agent keeps product repos in sync with their template. This answers Böckeler's versioning warning.
+
 ### Layer 1. Instructions (the "source code" of the factory)
 - `AGENTS.md` / `CLAUDE.md` at repo root: short, only what the agent cannot infer from the code. Build/test commands, hard rules, what never to touch. Over-specified files degrade performance (Anthropic).
 - `skills/` directory: one skill per repeatable procedure (release, migration, perf check, PR report format). Skills are versioned and reviewed in PRs like code.
 - `REVIEW_CHECKLIST.md`: your own introspected review criteria (Staltz #8). The review agent reads only this.
 - `PR_REPORT_TEMPLATE.md`: mandatory report format: intent, spec IDs covered, tests added (fail-to-pass evidence), risk class, what was not done, open questions. Humans review this, not the diff, by default.
-- `change-classes.yaml`: class → autonomy level → required gates → who approves.
+- `change-classes.yaml`: class → autonomy level → required gates → who approves. Stack-agnostic.
+- `project.yaml`: the per-repo profile. Paths, gate commands, thresholds, and the Layer 0 decisions for that product. Each template ships one filled in.
 - All of the above live in `factory/` and are protected by CODEOWNERS. Agents cannot edit them.
 
 ### Layer 2. Environment (pristine, fail-closed)
@@ -94,12 +105,12 @@ Opinionated. Assumes a small team (1-5 humans), a GitHub monorepo or few repos, 
 ### Layer 3. Agents (small, narrow, single-purpose)
 | Agent | Trigger | Scope | Can write? |
 |---|---|---|---|
-| Triage | New issue / alert | Classify: ready, needs spec, needs info, defer. Assigns change class. | No (labels only) |
+| Triage | New issue / alert | Classify: ready, needs spec, needs info, defer. Assigns change class. Picks the template for a new product. | No (labels only) |
 | Spec | Triage says "needs spec" | Requirements with IDs, each mapped to a named test. Human approves. | Spec file only |
 | Implementer | Approved spec | One branch, one sandbox, runs local checks, opens PR with report. | Code + tests, not `factory/` |
 | Verifier | PR opened | Fresh context. Checks built artifact against spec and holdout scenarios. Writes verdict. | No |
 | Reviewer | PR opened | Runs `REVIEW_CHECKLIST.md` systematically. Posts structured report. Advisory. | No |
-| Janitors (scheduled) | Cron | Dead code, dep updates, lint-rule migration, flaky test quarantine, doc drift. One concern per janitor. | PRs only, low-risk class |
+| Janitors (scheduled) | Cron | Dead code, dep updates, lint-rule migration, flaky test quarantine, doc drift, template sync. One concern per janitor. | PRs only, low-risk class |
 | On-call | Alert | Reads logs/metrics, posts interim findings, may open a PR. Never deploys. | PR only |
 | Harness improver (scheduled, weekly) | Cron | Reads failed runs and reverted PRs, proposes new guides/sensors as PRs to `factory/`. | PR to `factory/`, human merges |
 
@@ -133,7 +144,7 @@ Order of execution, cheapest first:
 
 ## Part 3. Rollout order (Staltz #13 applied)
 
-1. **Week 1-2:** Layer 0 and Layer 1. No autonomy yet. Run the Reviewer agent on human PRs only. Tune the checklist and report until you trust it.
+1. **Week 1-2:** Layer 0 (the first template, and the first product repo created from it) and Layer 1. No autonomy yet. Run the Reviewer agent on human PRs only. Tune the checklist and report until you trust it.
 2. **Week 3-4:** Implementer on the lowest-risk change class (docs, tests, lint fixes) with full human review. Record every mistake into guides/sensors.
 3. **Week 5-6:** Add Verifier and holdout scenarios. Add the first two janitors (deps, dead code). Measure acceptance rate.
 4. **Week 7-8:** Promote one more change class. Add twins for the top incident-causing integration. Add provenance and the dashboard.
@@ -147,6 +158,8 @@ Stop condition at every step: if a run fails because the environment is wrong, f
 - "Send a dozen LLMs to review and see what sticks" (Staltz #8).
 - Reviewing in diff while authoring in English (Staltz #10).
 - Letting the coder agent edit tests, CI, or `factory/`.
+- Letting an agent generate a new product's scaffold, including its own lint, test, and CI config.
+- Building templates for stacks no product needs yet.
 - `latest` model aliases in production.
 - Gracefully degrading when a tool is missing.
 - Measuring cost per run instead of cost per accepted change.
