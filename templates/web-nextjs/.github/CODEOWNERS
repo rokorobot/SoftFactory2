@@ -1,0 +1,20 @@
+# Factory control surface and sensors. Agents never merge changes here; a human code owner must approve.
+# Only enforced once branch protection on main requires "Review from Code Owners".
+# Keep in step with the specs, infra, sensor_config, flag_config and factory paths in factory/project.yaml.
+/factory/                        @REPLACE_WITH_OWNER
+/.github/                        @REPLACE_WITH_OWNER
+/AGENTS.md                       @REPLACE_WITH_OWNER
+/CLAUDE.md                       @REPLACE_WITH_OWNER
+/skills/                         @REPLACE_WITH_OWNER
+/specs/                          @REPLACE_WITH_OWNER
+/scripts/                        @REPLACE_WITH_OWNER
+/biome.json                      @REPLACE_WITH_OWNER
+/tsconfig.json                   @REPLACE_WITH_OWNER
+/.dependency-cruiser.cjs         @REPLACE_WITH_OWNER
+/vitest.config.mts               @REPLACE_WITH_OWNER
+/vitest.integration.config.mts   @REPLACE_WITH_OWNER
+/playwright.config.ts            @REPLACE_WITH_OWNER
+/stryker.config.mjs              @REPLACE_WITH_OWNER
+/prisma7.config.ts               @REPLACE_WITH_OWNER
+/next.config.ts                  @REPLACE_WITH_OWNER
+/.node-version                   @REPLACE_WITH_OWNER
