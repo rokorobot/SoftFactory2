@@ -23,7 +23,7 @@ Copy everything below the line, down to the end of section 6.
 <!-- One or two sentences: what changes for the user or system, and why. No implementation detail. -->
 
 **Spec / issue:** <!-- link -->
-**Change class:** <!-- your declaration, from factory/change-classes.yaml. CI derives its own; the riskier one wins. -->
+**Change class:** <!-- as assigned by Triage, from factory/change-classes.yaml. CI derives its own; the riskier one wins. -->
 **Autonomy level:** <!-- L1, L2, L3, as the class currently allows -->
 **Run:** <!-- run ID, pinned model ID, skill@sha, attempt n of max, tokens used, minutes, transcript link -->
 

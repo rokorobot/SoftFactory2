@@ -5,8 +5,17 @@
 # Globs use CODEOWNERS / gitignore syntax.
 
 version: 1
-project: SoftFactory2
-stack: none            # this repo holds the factory itself; no application code yet
+project: SoftFactory2   # this repo holds the factory itself; no application code yet
+
+# Layer 0 of the preplan. "Software in general" still means harnessable software: agents write
+# no code in a repo until every line here is filled in (preplan Part 3, weeks 1-2).
+layer0:
+  language: ""               # strictly typed: TypeScript strict, Go, Rust, or Python with pyright strict
+  structural_lint: ""        # dependency-cruiser, ArchUnit, import-linter, or equivalent
+  framework: ""              # one opinionated framework per layer, no bespoke plumbing
+  formatter_linter: ""       # one formatter + linter with autofix; errors written as fix instructions
+  unit_suite_max_minutes: 2
+  scripts: []                # one script per repeated action, e.g. scripts/test-changed
 
 paths:
   docs: ["docs/**", "**/*.md"]

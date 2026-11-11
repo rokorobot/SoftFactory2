@@ -12,17 +12,17 @@
 #   L2  Agent opens PR. Human reads the report; reads the diff only if a gate or the report flags it.
 #   L3  Auto-merge when every gate passes. Covered by the weekly random audit.
 #
-# Classification is done by the `classify` gate, from the diff. The class an agent declares is
-# never trusted on its own.
+# Classification: the Triage agent assigns a class from the issue (preplan Layer 3). The
+# `classify` gate then re-derives it from the diff. Triage's class is never trusted on its own.
 #   1. Each changed file gets every path class whose `paths` sets (in project.yaml) match it.
-#   2. A file that matches no path class is source code. Its class is the declared source class
-#      (lint-fix, refactor, or feature). With no declaration, it is `feature`. (fail closed)
+#   2. A file that matches no path class is source code. Its class is the source class Triage
+#      assigned (lint-fix, refactor, or feature). With none assigned, it is `feature`. (fail closed)
 #   3. A manifest change that adds a package is `deps-new`, not `deps-update`.
 #   4. The PR's class is the highest-risk class of any file. Risk order, low to high, is the
 #      order of `classes` below.
 #   5. Gates: the union of the gates of every class matched. Approvers: the highest number.
 #      Autonomy: the lowest level.
-#   6. If the agent declared a lower-risk class than the one derived, `classify` fails.
+#   6. If Triage assigned a lower-risk class than the one derived, `classify` fails.
 #
 # Everything starts at L1 or below. A class moves up one level only through a human PR to this
 # file, citing the promotion evidence. (Staltz #13: premature automation is the root of all evil.)
@@ -30,9 +30,10 @@
 version: 2
 updated: 2026-11-11
 
-# One human on the team. While true: approvers_required is capped at 1, and the human who asked
-# for a change may approve it. The authoring agent never counts. Accepted risk. Set to false when
-# a second human joins; from then on the requester does not count either (preplan 1.5).
+# DEVIATION from preplan 1.5, which says the requester can never approve. With one human on the
+# team that rule lets nothing merge. While true: approvers_required is capped at 1, and the human
+# who asked for a change may approve it. The authoring agent never counts, in either mode.
+# Pending the owner's decision. Set to false as soon as a second human joins.
 solo_mode: true
 
 defaults:
@@ -54,30 +55,32 @@ human_labels:
 # Every gate named below must be listed here; an unknown name fails CI. Commands come from
 # project.yaml; a required gate with no command fails. (fail closed)
 #   check = deterministic code.   judge = LLM output, see "Judges".
+# Gates run in the order listed, cheapest first. `step` is the step in preplan Layer 4.
+# Step 8 (human approval, per class) and step 9 (rollout) follow the gates.
 gates:
-  classify:            {kind: check, does: "derives the class from the diff (rules above); fails on a lower declared class"}
-  provenance:          {kind: check, does: "every agent commit has the Factory-* trailers; the model is a pinned ID, not an alias"}
-  secret_scan:         {kind: check, does: "no secrets in the diff"}
-  diff_size:           {kind: check, does: "added + removed lines within the class limit"}
-  format:              {kind: check, does: "formatter reports no changes"}
-  lint:                {kind: check, does: "linter passes"}
-  typecheck:           {kind: check, does: "type checker passes"}
-  structural_lint:     {kind: check, does: "module-boundary rules pass"}
-  workaround_scan:     {kind: check, does: "no new lint disables, type ignores, skip markers, --no-verify, or --force"}
-  test_integrity:      {kind: check, does: "no existing test changed, skipped, or deleted, unless test-change-approved"}
-  tests_changed:       {kind: check, does: "tests for the changed scope pass"}
-  full_suite:          {kind: check, does: "the whole test suite passes"}
-  fail_to_pass:        {kind: check, does: "CI runs each requirement's test on base (must fail) and on head (must pass); a PR with no requirement IDs fails"}
-  mutation_changed:    {kind: check, does: "mutation score on changed lines meets thresholds.mutation_changed"}
-  integration_twins:   {kind: check, does: "integration tests pass against twins or recorded fixtures"}
-  deps_single:         {kind: check, does: "the PR changes exactly one dependency"}
-  license_scan:        {kind: check, does: "dependency licenses are on the allowlist"}
-  vuln_scan:           {kind: check, does: "no known vulnerabilities at or above the threshold"}
-  migration_reversible: {kind: check, does: "a down migration exists, unless one-way-approved"}
-  spec_isolated:       {kind: check, does: "a PR that changes a spec changes nothing else"}
-  merge_queue:         {kind: check, does: "rebased onto head and retested before merge"}
-  reviewer_report:     {kind: judge, does: "a complete Reviewer report exists for the head commit"}
-  verifier_verdict:    {kind: judge, does: "the Verifier ran the holdout scenarios against the head commit"}
+  classify:            {step: 1, kind: check, does: "derives the class from the diff (rules above); fails on a lower assigned class"}
+  provenance:          {step: 1, kind: check, does: "every agent commit has the Factory-* trailers; the model is a pinned ID, not an alias"}
+  spec_isolated:       {step: 1, kind: check, does: "a PR that changes a spec changes nothing else"}
+  deps_single:         {step: 1, kind: check, does: "the PR changes exactly one dependency"}
+  diff_size:           {step: 1, kind: check, does: "added + removed lines within the class limit"}
+  secret_scan:         {step: 1, kind: check, does: "no secrets in the diff"}
+  format:              {step: 1, kind: check, does: "formatter reports no changes"}
+  lint:                {step: 1, kind: check, does: "linter passes"}
+  typecheck:           {step: 1, kind: check, does: "type checker passes"}
+  workaround_scan:     {step: 1, kind: check, does: "no new lint disables, type ignores, skip markers, --no-verify, or --force"}
+  test_integrity:      {step: 1, kind: check, does: "no existing test changed, skipped, or deleted, unless test-change-approved"}
+  migration_reversible: {step: 1, kind: check, does: "a down migration exists, unless one-way-approved"}
+  license_scan:        {step: 1, kind: check, does: "dependency licenses are on the allowlist"}
+  vuln_scan:           {step: 1, kind: check, does: "no known vulnerabilities at or above the threshold"}
+  structural_lint:     {step: 2, kind: check, does: "module-boundary rules pass"}
+  tests_changed:       {step: 2, kind: check, does: "tests for the changed scope pass"}
+  fail_to_pass:        {step: 3, kind: check, does: "CI runs each requirement's test on base (must fail) and on head (must pass); a PR with no requirement IDs fails"}
+  mutation_changed:    {step: 4, kind: check, does: "mutation score on changed lines meets thresholds.mutation_changed"}
+  full_suite:          {step: 5, kind: check, does: "the whole test suite passes"}
+  integration_twins:   {step: 5, kind: check, does: "integration tests pass against twins or recorded fixtures"}
+  verifier_verdict:    {step: 6, kind: judge, does: "the Verifier ran the holdout scenarios against the head commit"}
+  reviewer_report:     {step: 6, kind: judge, does: "a complete Reviewer report exists for the head commit"}
+  merge_queue:         {step: 7, kind: check, does: "rebased onto head and retested before merge"}
 
 # Judges never approve and are never the last word (preplan 1.5). Their verdicts route the PR:
 #   BLOCK item FAIL or UNSURE, or Verifier FAIL: merge is held until it is fixed, or a code
@@ -88,8 +91,8 @@ gates:
 
 gate_sets:
   base:     [classify, provenance, secret_scan, diff_size, format, lint, reviewer_report]
-  code:     [typecheck, structural_lint, workaround_scan, test_integrity, tests_changed, full_suite, merge_queue]
-  behavior: [fail_to_pass, mutation_changed, integration_twins, verifier_verdict]
+  code:     [typecheck, workaround_scan, test_integrity, structural_lint, tests_changed, full_suite, integration_twins, merge_queue]
+  behavior: [fail_to_pass, mutation_changed, verifier_verdict]
 
 calibration:
   # Preplan 1.5: judges are checked against human-labelled examples. No class leaves L1 without it.
@@ -155,7 +158,7 @@ classes:
     description: Patch and minor upgrades of existing dependencies. Janitor-owned.
     paths: [dependency_manifests, lockfiles]
     gates: [base, code]
-    extra_gates: [deps_single, vuln_scan, integration_twins]
+    extra_gates: [deps_single, vuln_scan]
 
   - name: refactor
     autonomy: L1
@@ -181,7 +184,7 @@ classes:
     description: Adds a dependency. Detected from the manifest diff, not from paths.
     labels_required: [dep-approved]
     gates: [base, code]
-    extra_gates: [license_scan, vuln_scan, integration_twins]
+    extra_gates: [license_scan, vuln_scan]
 
   - name: specs
     autonomy: L1
