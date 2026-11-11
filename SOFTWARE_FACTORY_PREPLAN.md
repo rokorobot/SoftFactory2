@@ -1,6 +1,6 @@
 # Software Factory: State of the Art and Ideal-Case Stack Preplan
 
-Compiled 2026-11-11. Amended 2026-11-11: templates (Layer 0) and `project.yaml` (Layer 1), after the owner decided the factory builds software in general. Sources: André Staltz, Birgitta Böckeler (Thoughtworks / martinfowler.com), Simon Willison, Mitchell Hashimoto, Steve Yegge, Dex Horthy, Addy Osmani, Andrej Karpathy, StrongDM's factory team, Anthropic's Claude Code guidance, and the Sawyer Middeleer study of seven operating factories (Spotify, Stripe, Anthropic, Ramp, WorkOS, Uber, Monzo). Links at the end.
+Compiled 2026-11-11. Amended 2026-11-11: templates (Layer 0), `project.yaml` (Layer 1), and the list of adopted open standards (Part 2), after the owner decided the factory builds software in general. Sources: André Staltz, Birgitta Böckeler (Thoughtworks / martinfowler.com), Simon Willison, Mitchell Hashimoto, Steve Yegge, Dex Horthy, Addy Osmani, Andrej Karpathy, StrongDM's factory team, Anthropic's Claude Code guidance, and the Sawyer Middeleer study of seven operating factories (Spotify, Stripe, Anthropic, Ramp, WorkOS, Uber, Monzo). Links at the end.
 
 ---
 
@@ -66,6 +66,25 @@ Where sources disagree, I say so. Where they agree, treat it as settled.
 
 Opinionated. Assumes a small team (1-5 humans), GitHub, and willingness to spend on cloud agents. The factory builds software in general: the factory lives in one repo, and each product gets its own repo, created from a template. Tools named are the ones with the strongest track record as of now; swap equivalents freely, keep the layer.
 
+### Built on existing open standards
+Do not reinvent what a major open-source project already maintains. Checked on GitHub 2026-11-11.
+
+| Piece of the factory | Standard | Status |
+|---|---|---|
+| Agent instruction file | `AGENTS.md` (agentsmd/agents.md) | In use |
+| Specs with requirement IDs | GitHub Spec Kit's spec template (github/spec-kit): `FR-001` requirements, Given/When/Then scenarios, "needs clarification" markers | Approved |
+| Running the Reviewer on PRs | anthropics/claude-code-action | Approved |
+| Creating a product from a template, and keeping it in sync | Copier (copier-org/copier): `copier copy`, then `copier update` | Approved |
+| Scheduled agents and triggers | GitHub Agentic Workflows (github/gh-aw): Markdown compiled to a GitHub Action; the agent is read-only and sandboxed, and writes go through validated "safe outputs" | Approved, from rollout weeks 5-6 |
+| Skills | Agent Skills spec (agentskills/agentskills): a folder with a `SKILL.md` | Proposed |
+| Dependency updates | Dependabot or Renovate, instead of an agent | Proposed |
+| Pinned environments (Layer 2) | Dev Containers spec | Proposed, later |
+| Agent traces (Layer 5) | OpenTelemetry GenAI semantic conventions | Proposed, later |
+
+No open standard was found for these, so they stay the factory's own: `change-classes.yaml`, `REVIEW_CHECKLIST.md`, `PR_REPORT_TEMPLATE.md`, `project.yaml`, and the gate self-test in each template.
+
+Not adopted: whole systems with their own way of working (Gas Town, BMAD, OpenHands). Taking one would replace this plan, not fill a gap in it.
+
 ### Layer 0. Codebase made harnessable (do this first, before any automation)
 | Decision | Choice | Why |
 |---|---|---|
@@ -80,10 +99,10 @@ Opinionated. Assumes a small team (1-5 humans), GitHub, and willingness to spend
 - Every product repo starts from a prepared template in `templates/<name>/` in the factory repo, protected like `factory/`. A template is the table above already decided and wired: stack, lint and boundary rules, test setup, scripts, CI gates, and a filled-in `factory/project.yaml`.
 - The factory selects a template. It never invents one. A generated scaffold would have the agent writing the sensors that judge its own work.
 - Triage picks the template from a short decision table (web app, service or CLI, data work). A human confirms it when approving the spec.
-- A script creates the product repo from the template. No LLM in that step.
+- Copier creates the product repo from the template. No LLM in that step.
 - New templates arrive as `factory`-class PRs. An agent may draft one when a product fits none; a human approves it.
 - Build one template first. Add the next only when a real product needs it; a template no product has shipped on is untested.
-- A scheduled agent keeps product repos in sync with their template. This answers Böckeler's versioning warning.
+- A scheduled agent runs `copier update` in each product repo and opens the PR. This answers Böckeler's versioning warning.
 
 ### Layer 1. Instructions (the "source code" of the factory)
 - `AGENTS.md` / `CLAUDE.md` at repo root: short, only what the agent cannot infer from the code. Build/test commands, hard rules, what never to touch. Over-specified files degrade performance (Anthropic).
@@ -114,7 +133,7 @@ Opinionated. Assumes a small team (1-5 humans), GitHub, and willingness to spend
 | On-call | Alert | Reads logs/metrics, posts interim findings, may open a PR. Never deploys. | PR only |
 | Harness improver (scheduled, weekly) | Cron | Reads failed runs and reverted PRs, proposes new guides/sensors as PRs to `factory/`. | PR to `factory/`, human merges |
 
-Orchestration: GitHub Actions for triggers and gates, plus Claude Code routines or Cloudroom Loops for scheduled agents. Add Temporal only when you need durable multi-step workflows with retries across days. Do not build a custom orchestrator early.
+Orchestration: GitHub Actions for triggers and gates. The Reviewer runs through claude-code-action. Scheduled agents run as GitHub Agentic Workflows; Claude Code routines or Cloudroom Loops remain the fallback. Add Temporal only when you need durable multi-step workflows with retries across days. Do not build a custom orchestrator early.
 
 ### Layer 4. Gates (code, not prompts)
 Order of execution, cheapest first:
@@ -181,4 +200,5 @@ Stop condition at every step: if a run fails because the environment is wrong, f
 - Middeleer, You should take software factories seriously: https://exponentialoperator.substack.com/p/you-should-take-software-factories
 - Agentic Software Factory pipeline: https://fdeinterviews.com/blog/agentic-software-factory
 - Anthropic, Claude Code best practices: https://code.claude.com/docs/en/best-practices and routines: https://code.claude.com/docs/en/routines
+- Adopted standards: https://github.com/agentsmd/agents.md , https://github.com/github/spec-kit , https://github.com/anthropics/claude-code-action , https://github.com/copier-org/copier , https://github.com/github/gh-aw , https://github.com/agentskills/agentskills
 - Thoughtworks Technology Radar vol. 34 (2026-04): https://www.thoughtworks.com/content/dam/thoughtworks/documents/radar/2026/04/tr_technology_radar_vol_34_en.pdf
