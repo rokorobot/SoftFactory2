@@ -63,6 +63,6 @@ module.exports = {
     doNotFollow: { path: "node_modules" },
     tsPreCompilationDeps: true,
     tsConfig: { fileName: "tsconfig.json" },
-    exclude: { path: "^(\\.next|reports)/" },
+    exclude: { path: "^(\\.next|reports|src/generated)/" },
   },
 };

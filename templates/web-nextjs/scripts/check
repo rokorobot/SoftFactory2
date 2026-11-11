@@ -5,6 +5,7 @@ cd "$(dirname "$0")/.."
 echo "== format + lint (biome)"
 npx biome ci --error-on-warnings --colors=off .
 echo "== typecheck (tsc)"
+npx prisma generate >/dev/null
 npx next typegen
 npx tsc --noEmit
 echo "== module boundaries (dependency-cruiser)"

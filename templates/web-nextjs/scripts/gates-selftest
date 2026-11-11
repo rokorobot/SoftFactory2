@@ -23,7 +23,7 @@ expect_reject() { # name, file, content, expected text in the gate's output, com
 }
 
 biome() { npx biome ci --error-on-warnings --colors=off .; }
-types() { npx tsc --noEmit; }
+types() { npx prisma generate >/dev/null && npx tsc --noEmit; }
 bounds() { npx depcruise src --config .dependency-cruiser.cjs; }
 tests() { npx vitest run; }
 
