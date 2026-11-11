@@ -18,13 +18,32 @@ Triage picks the row. A human confirms it when approving the spec. If no row fit
 - `scripts/ci`: every gate, in pipeline order.
 - `scripts/gates-selftest`: plants a known-bad change for each gate and requires the gate to reject it.
 - `AGENTS.md` with the commands, and `CODEOWNERS` covering every sensor config file.
-- A workflow in this repo's `.github/workflows/` that runs the template's `scripts/ci` on every change to it.
+- Files that need the product name or owner end in `.jinja` and use `{{ project_name }}` and `{{ owner }}`. Everything else is copied as it is.
+- A workflow in this repo's `.github/workflows/` that runs the template's `scripts/ci` on every change to it, and `scripts/render-check`, which creates a product with Copier and runs its fast gates.
 
 ## Adding or changing a template
 
 A `factory`-class PR. An agent may draft it; a human code owner approves it. Start from the framework's official generator, commit its output untouched, then add the factory layer on top so the difference is reviewable.
 
+## Creating a product
+
+```bash
+pipx install copier==9.19.1
+copier copy --trust gh:rokorobot/SoftFactory2 <new-folder>
+```
+
+Copier asks for the template, the product name and the code owner's GitHub handle. It copies the template, fills in the name and owner, and adds the policy files from `factory/`. No LLM takes part. `--trust` is needed because Copier runs the copy commands listed in `copier.yml`.
+
+## Keeping a product in sync
+
+```bash
+copier update --trust      # inside the product repo, with a clean git status
+```
+
+Copier reads `.copier-answers.yml` to see which factory release the product was built from, then applies what changed since, keeping the product's own edits. Conflicts show up as normal merge markers. A release is a git tag on this repo (`v0.1.0`, `v0.2.0`): one tag covers the policy and every template.
+
+Copier recommends one template per repository, because tags are shared. This repo keeps several under `templates/` by choice, using Copier's documented templated-subdirectory option; the cost is that a release for one template is a no-op update for products built on another.
+
 ## Not built yet
 
-- The script that creates a product repo from a template: it copies the template and the policy files in `factory/`, and fills in `REPLACE_WITH_PROJECT_NAME` and `REPLACE_WITH_OWNER`.
-- The scheduled agent that keeps product repos in sync with their template.
+- The scheduled agent that runs `copier update` in each product repo and opens the PR.

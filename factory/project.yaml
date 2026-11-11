@@ -29,7 +29,7 @@ paths:
   sensor_config: ["scripts/**"] # add linter, type-checker and test-runner config when a stack is chosen
   flag_config: []
   security_sensitive: []
-  factory: ["factory/**", "templates/**", ".github/CODEOWNERS", "AGENTS.md", "CLAUDE.md", "skills/**"]
+  factory: ["factory/**", "templates/**", "copier.yml", ".github/CODEOWNERS", "AGENTS.md", "CLAUDE.md", "skills/**"]
 
 # Every path in specs, infra, sensor_config, flag_config, security_sensitive and factory must
 # also have a code owner in .github/CODEOWNERS.
