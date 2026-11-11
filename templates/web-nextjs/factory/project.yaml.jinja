@@ -5,7 +5,7 @@
 # Globs use CODEOWNERS / gitignore syntax.
 
 version: 1
-project: REPLACE_WITH_PROJECT_NAME
+project: {{ project_name }}
 template: web-nextjs
 
 layer0:
@@ -53,7 +53,12 @@ paths:
   flag_config: []
   security_sensitive: [] # add the auth, payments and PII paths as soon as they exist
   factory:
-    ["factory/**", ".github/CODEOWNERS", "AGENTS.md", "CLAUDE.md", "skills/**"]
+    - "factory/**"
+    - ".github/CODEOWNERS"
+    - "AGENTS.md"
+    - "CLAUDE.md"
+    - "skills/**"
+    - ".copier-answers.yml"
 
 commands:
   format: "scripts/check format"

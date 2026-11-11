@@ -14,7 +14,8 @@
       "!dist",
       "!build",
       "!reports",
-      "!src/generated"
+      "!src/generated",
+      "!factory"
     ]
   },
   "formatter": {

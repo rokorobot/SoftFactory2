@@ -4,7 +4,7 @@ A product repo built by the software factory, from the `web-nextjs` template.
 
 ## Hard rules
 
-- Never edit `factory/`, `.github/`, `AGENTS.md`, `CLAUDE.md`, or `skills/` unless your task's change class is `factory`. Those changes need a human code owner.
+- Never edit `factory/`, `.github/`, `AGENTS.md`, `CLAUDE.md`, `skills/`, or `.copier-answers.yml` unless your task's change class is `factory`. Those changes need a human code owner.
 - Never edit the `specs`, `infra`, `sensor_config`, or `flag_config` paths listed in `factory/project.yaml` unless your change class is `specs` or `infra-ci`. That includes `scripts/` and every lint, type-check and test config.
 - Every PR description follows `factory/PR_REPORT_TEMPLATE.md`. Every section is filled in; claim only what you ran.
 - Classify your change with `factory/change-classes.yaml`. If several classes match, use the riskiest one.

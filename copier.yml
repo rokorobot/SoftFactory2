@@ -1,0 +1,56 @@
+# Copier configuration. Creates a product repo from a template in templates/, and updates it later.
+# Humans own this file (CODEOWNERS). Runs on Linux and macOS.
+#
+#   Create:  copier copy --trust gh:rokorobot/SoftFactory2 <new-folder>
+#   Update:  copier update --trust          (inside the product repo, with a clean git status)
+#
+# --trust is required because the tasks at the bottom copy the factory's policy files.
+# Versions are this repo's git tags. One tag is one release of the policy and every template.
+
+_min_copier_version: "9.19.0"
+_subdirectory: "templates/{{ template }}"
+_answers_file: .copier-answers.yml
+_exclude:
+  - copier.yml
+  - copier.yaml
+  - "~*"
+  - .git
+  - .DS_Store
+  - node_modules
+  - .next
+  - reports
+  - src/generated
+  - next-env.d.ts
+  - "*.tsbuildinfo"
+
+template:
+  type: str
+  help: Which template? The decision table is in templates/README.md.
+  choices:
+    "Web app: Next.js, TypeScript, Prisma on Postgres": web-nextjs
+
+project_name:
+  type: str
+  help: Product name. Lowercase letters, digits and hyphens. Also the repo name.
+  validator: >-
+    {% if not (project_name | regex_search('^[a-z][a-z0-9-]{1,48}[a-z0-9]$')) %}
+    Use 3 to 50 lowercase letters, digits or hyphens, starting with a letter.
+    {% endif %}
+
+owner:
+  type: str
+  help: GitHub handle of the human code owner, without the @.
+  validator: >-
+    {% if not (owner | regex_search('^[A-Za-z0-9][A-Za-z0-9-]{0,38}$')) %}
+    That is not a valid GitHub handle. Leave out the @.
+    {% endif %}
+
+# The stack-agnostic policy lives outside the template folder, so it is copied here.
+# Runs on create and on every update, which keeps products on the current policy.
+_tasks:
+  - ["mkdir", "-p", "factory"]
+  - ["cp", "{{ _copier_conf.src_path }}/factory/change-classes.yaml", "factory/change-classes.yaml"]
+  - ["cp", "{{ _copier_conf.src_path }}/factory/REVIEW_CHECKLIST.md", "factory/REVIEW_CHECKLIST.md"]
+  - ["cp", "{{ _copier_conf.src_path }}/factory/PR_REPORT_TEMPLATE.md", "factory/PR_REPORT_TEMPLATE.md"]
+  - ["cp", "{{ _copier_conf.src_path }}/factory/SPEC_TEMPLATE.md", "factory/SPEC_TEMPLATE.md"]
+  - ["cp", "{{ _copier_conf.src_path }}/factory/THIRD_PARTY_NOTICES.md", "factory/THIRD_PARTY_NOTICES.md"]

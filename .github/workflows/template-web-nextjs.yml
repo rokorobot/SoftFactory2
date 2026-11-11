@@ -3,10 +3,10 @@ name: template-web-nextjs
 
 on:
   pull_request:
-    paths: ["templates/web-nextjs/**", ".github/workflows/template-web-nextjs.yml"]
+    paths: ["templates/web-nextjs/**", "factory/**", "copier.yml", "scripts/render-check", ".github/workflows/template-web-nextjs.yml"]
   push:
     branches: [main]
-    paths: ["templates/web-nextjs/**", ".github/workflows/template-web-nextjs.yml"]
+    paths: ["templates/web-nextjs/**", "factory/**", "copier.yml", "scripts/render-check", ".github/workflows/template-web-nextjs.yml"]
 
 permissions:
   contents: read
@@ -53,3 +53,15 @@ jobs:
           name: screenshots
           path: templates/web-nextjs/reports/screenshots
           if-no-files-found: ignore
+
+  render:
+    # Creates a product with Copier, the way a real product starts, and runs its fast gates.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: templates/web-nextjs/.node-version
+      - run: pipx install copier==9.19.1
+      - run: scripts/render-check web-nextjs

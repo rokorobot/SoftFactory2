@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# Creates a throwaway product from a template with Copier and runs the gates that need no database.
+# Proves the template still renders and that a freshly created product is green.
+# Usage: scripts/render-check [template]      Needs copier on PATH (pipx install copier).
+set -euo pipefail
+cd "$(dirname "$0")/.."
+template="${1:-web-nextjs}"
+dest="$(mktemp -d)/render-check"
+fail() { echo "render-check: $*" >&2; exit 1; }
+
+copier copy --trust --defaults --vcs-ref HEAD \
+  -d "template=$template" -d project_name=render-check -d owner=render-check-owner . "$dest"
+cd "$dest"
+
+for f in .copier-answers.yml AGENTS.md README.md .github/CODEOWNERS factory/project.yaml \
+  factory/change-classes.yaml factory/REVIEW_CHECKLIST.md factory/PR_REPORT_TEMPLATE.md factory/SPEC_TEMPLATE.md; do
+  [ -s "$f" ] || fail "missing or empty in the created product: $f"
+done
+[ -z "$(find . -name '*.jinja' -not -path './node_modules/*')" ] || fail "a .jinja file was copied instead of rendered"
+if grep -rIl -E 'REPLACE_WITH_|\{\{ *(project_name|owner|template) *\}\}' . --exclude-dir=node_modules; then
+  fail "the files listed above still contain a placeholder"
+fi
+grep -q '^project: render-check$' factory/project.yaml || fail "project name not filled in factory/project.yaml"
+grep -q '@render-check-owner' .github/CODEOWNERS || fail "owner not filled in CODEOWNERS"
+[ -x scripts/ci ] || fail "scripts lost their executable bit"
+
+npm ci
+scripts/check
+scripts/test-all
+echo "render-check: a product created from '$template' passes its static gates and unit tests"
