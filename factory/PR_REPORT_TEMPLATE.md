@@ -30,7 +30,7 @@ Copy everything below the line, down to the end of section 6.
 ## 2. Requirements coverage
 | Spec ID | Done? | Where (file:line) | Test |
 |---|---|---|---|
-| R1 | yes / partial / no | | `test_name` |
+| FR-001 | yes / partial / no | | `test_name` |
 
 ## 3. What changed
 <!-- Bullets, one per behavior change, in English. Not a file list. -->

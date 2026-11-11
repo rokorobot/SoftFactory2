@@ -61,6 +61,7 @@ gates:
   classify:            {step: 1, kind: check, does: "derives the class from the diff (rules above); fails on a lower assigned class"}
   provenance:          {step: 1, kind: check, does: "every agent commit has the Factory-* trailers; the model is a pinned ID, not an alias"}
   spec_isolated:       {step: 1, kind: check, does: "a PR that changes a spec changes nothing else"}
+  spec_complete:       {step: 1, kind: check, does: "an Approved spec has no [NEEDS CLARIFICATION] marker and every FR appears in its requirement-to-test map"}
   deps_single:         {step: 1, kind: check, does: "the PR changes exactly one dependency"}
   diff_size:           {step: 1, kind: check, does: "added + removed lines within the class limit"}
   secret_scan:         {step: 1, kind: check, does: "no secrets in the diff"}
@@ -173,7 +174,7 @@ classes:
     max_autonomy: L2
     source: true
     description: >
-      New or changed behavior from an approved spec with requirement IDs. Bug fixes belong here:
+      New or changed behavior from an Approved spec (factory/SPEC_TEMPLATE.md). Bug fixes belong here:
       the issue is the spec, and the regression test is the fail-to-pass test.
     gates: [base, code, behavior]
     rollout: [flag_default_off, canary, auto_rollback]
@@ -189,10 +190,10 @@ classes:
   - name: specs
     autonomy: L1
     max_autonomy: L1
-    description: Requirement specs. Written by the Spec agent, approved by a human.
+    description: Requirement specs in the format of factory/SPEC_TEMPLATE.md. Written by the Spec agent, approved by a human.
     paths: [specs]
     gates: [base]
-    extra_gates: [spec_isolated]
+    extra_gates: [spec_isolated, spec_complete]
     notes: The Implementer never edits the spec it is building from.
 
   - name: schema-migration
