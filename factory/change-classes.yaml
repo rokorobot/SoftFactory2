@@ -7,7 +7,9 @@
 # one product (paths, commands, thresholds) lives in factory/project.yaml, one per product repo.
 #
 # Autonomy levels:
-#   L0  Agents do not open PRs in this class. Humans write; the Reviewer may still report.
+#   L0  Agents do not open PRs in this class on their own. Humans write; the Reviewer may still report.
+#       Exception: an agent may open one when a human owner asked for that specific change.
+#       The PR report says who asked and when, and a human still decides the merge.
 #   L1  Agent opens PR. Human reads the report AND the diff, then merges.
 #   L2  Agent opens PR. Human reads the report; reads the diff only if a gate or the report flags it.
 #   L3  Auto-merge when every gate passes. Covered by the weekly random audit.
@@ -19,7 +21,7 @@
 #      assigned (lint-fix, refactor, or feature). With none assigned, it is `feature`. (fail closed)
 #   3. A manifest change that adds a package is `deps-new`, not `deps-update`.
 #   4. The PR's class is the highest-risk class of any file. Risk order, low to high, is the
-#      order of `classes` below.
+#      order of `classes` below. A PR of one class may also contain files of lower-risk classes.
 #   5. Gates: the union of the gates of every class matched. Approvers: the highest number.
 #      Autonomy: the lowest level.
 #   6. If Triage assigned a lower-risk class than the one derived, `classify` fails.
@@ -120,11 +122,15 @@ demotion:
   # Any ONE trigger drops the class one level, floor L0, until a human re-promotes it.
   # How it takes effect at once, without anyone editing this file: the trigger is recorded as an
   # open issue labelled `demote:<class>`. CI treats the class as one level lower per open issue.
-  # Anyone, agents included, may open one. Only a code owner may close one; CI checks who did.
+  # Anyone, agents included, may open one. One opened by a deterministic gate or a human takes
+  # effect at once. One opened by an agent on its own judgement, the Reviewer included, takes
+  # effect only when a code owner adds the `confirmed` label: judges are advisory.
+  # Only a code owner may close one; CI checks who did.
   triggers:
     - a merged PR in this class is reverted for a defect
     - a production incident is traced to a PR in this class
     - a weekly audit finds a BLOCK-level problem the Reviewer passed
+    - a critical failure class (gate-tampering, policy, damage; see FAILURE_TAXONOMY.md) is found in a PR in this class, merged or not, and confirmed by a deterministic gate or a human
   error_budget:
     # Agent merges pause for ALL classes when either count is reached in a rolling 7 days:
     pause_at_reverts: 2
@@ -229,7 +235,7 @@ classes:
     paths: [factory]
     max_diff_lines: 500        # owner decision 2026-11-11. Policy files cross-reference each other and a human always reads them.
     gates: [base]
-    notes: L0 now. At L1 only the weekly Harness Improver may propose. A human always merges.
+    notes: L0 now, so only owner-requested PRs. At L1 the weekly Harness Improver may also propose on its own. A human always merges.
 
 # Change log: date, class, old -> new level, evidence link.
 history: []

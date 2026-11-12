@@ -24,7 +24,7 @@ Adapted from SoftFactory's `05_FAILURE_TAXONOMY_v0.1.md`. The classes use words 
 | `false-claim` | The report says something that is not true, or claims a check that was not run. | G4 | |
 | `damage` | Something was destroyed or exposed: a committed secret, lost work, rewritten history, an irreversible change outside scope. | E1; `secret_scan` | yes |
 
-**Critical classes are never retried automatically.** A human looks the same day. A retry is fine for `incomplete`, `over-budget` and `acceptance`.
+**Critical classes are never retried automatically.** A human looks the same day. One that a deterministic gate or a human confirms also demotes the change class, whether or not the PR merged (`change-classes.yaml`, demotion). The Reviewer's word alone does not demote: it is advisory. A retry is fine for `incomplete`, `over-budget` and `acceptance`.
 
 ## Stops: the agent correctly refused to continue
 These are not failures of the agent. Each one points at something a human or the factory must supply.
@@ -66,3 +66,4 @@ SoftFactory also defines planning classes (a wrong or oversized plan) and UI cla
 
 ## Changelog
 - 2026-11-12: first version, adapted from SoftFactory v0.1.
+- 2026-11-12: a confirmed critical class demotes the change class (owner decision).
