@@ -63,13 +63,14 @@ Copy everything below the line, down to the end of section 6.
 ## 6. Not done, assumptions, questions
 - **Deliberately not done:** <!-- things the spec could be read to include that you left out -->
 - **Assumptions:** <!-- every guess you made where the spec was silent -->
-- **Environment problems hit:** <!-- missing tools, broken setup, flaky tests. You must report these, not work around them. -->
+- **Environment problems hit:** <!-- missing tools, broken setup, flaky tests. You must report these, not work around them. If you stopped, name the stop class from factory/FAILURE_TAXONOMY.md. -->
 - **Questions for a human:**
 
 ---
 
 ## 7. Review (the Reviewer's report, posted as a separate comment)
 **Summary:** <!-- First line. BLOCK count, WARN count. One sentence: merge-ready or not, and why. -->
+**Failure classes:** <!-- from factory/FAILURE_TAXONOMY.md, with item IDs, e.g. scope (A2), false-claim (G4). "none" if clean. -->
 **Reviewed commit:** <!-- head SHA. A review of an older commit does not count. -->
 **Reviewer:** <!-- run ID, pinned model ID -->
 **Checklist version:** <!-- git SHA of factory/REVIEW_CHECKLIST.md -->
