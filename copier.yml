@@ -53,4 +53,5 @@ _tasks:
   - ["cp", "{{ _copier_conf.src_path }}/factory/REVIEW_CHECKLIST.md", "factory/REVIEW_CHECKLIST.md"]
   - ["cp", "{{ _copier_conf.src_path }}/factory/PR_REPORT_TEMPLATE.md", "factory/PR_REPORT_TEMPLATE.md"]
   - ["cp", "{{ _copier_conf.src_path }}/factory/SPEC_TEMPLATE.md", "factory/SPEC_TEMPLATE.md"]
+  - ["cp", "{{ _copier_conf.src_path }}/factory/FAILURE_TAXONOMY.md", "factory/FAILURE_TAXONOMY.md"]
   - ["cp", "{{ _copier_conf.src_path }}/factory/THIRD_PARTY_NOTICES.md", "factory/THIRD_PARTY_NOTICES.md"]

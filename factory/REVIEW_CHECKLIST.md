@@ -15,6 +15,7 @@ The Reviewer agent reads this file and nothing else for review criteria. It runs
 - Every `FAIL` and `UNSURE` must cite evidence: `file:line` and one sentence. No evidence, no finding.
 - Every `PASS` on a BLOCK item must say what you checked, e.g. "3 new catch blocks, all rethrow: a.ts:10, b.ts:22, c.ts:40".
 - Items that do not apply to the class are left out. `N/A` on an item that does apply needs a one-line reason.
+- For every `FAIL` and `UNSURE`, name its class from `factory/FAILURE_TAXONOMY.md` in the report's "Failure classes" line, with the item IDs, e.g. `scope (A2), false-claim (G4)`. Write `none` when there are no findings.
 - Do not invent items. Observations outside this list go under "Other observations", capped at 3, and are never blocking. One that keeps coming back should become an item.
 - Do not suggest style changes the formatter or linter would catch. Those are sensors, not review.
 - Deliver the report the way your runner tells you: a file that a workflow step posts, or your own comment. It is always tied to the commit you reviewed. It never goes into the PR description, which the author can edit.
@@ -110,3 +111,4 @@ Record every add, change, or retirement with date and the incident or PR that ca
 - 2026-11-11: initial draft from the preplan. Not yet calibrated against human reviews.
 - 2026-11-11: review against the preplan, before first use. Added Applies-to and Source columns, moved deterministic checks to CI gates, added B5, D6 and the calibration section. Split G3 into G3 (complete, WARN) and G4 (true, BLOCK). C4 raised from NOTE to BLOCK to match the `mutation_changed` gate.
 - 2026-11-11: Reviewer now runs through claude-code-action with no shell or GitHub access; a workflow step posts its report. Delivery rule reworded to match.
+- 2026-11-12: every FAIL and UNSURE now carries a failure class from `FAILURE_TAXONOMY.md`, so findings can be counted.
