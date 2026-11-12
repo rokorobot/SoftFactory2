@@ -1,6 +1,6 @@
 # PR Report Template
 
-Every agent-authored PR uses sections 0-6 as its description. The Implementer fills them in. The Reviewer and the Verifier post sections 7 and 8 as their own comments, never in the description, because the author can edit the description.
+Every agent-authored PR uses sections 0-6 as its description. The Implementer fills them in. Sections 7 and 8 come from the Reviewer and the Verifier. They are posted as separate comments, by the agent or by a workflow step on its behalf, and never in the description, because the author can edit the description.
 
 How much a human reads depends on the autonomy level in `change-classes.yaml`. At L1: this report and the diff. At L2: this report, and the diff only when something raises a flag (Staltz #10).
 
@@ -68,7 +68,7 @@ Copy everything below the line, down to the end of section 6.
 
 ---
 
-## 7. Review (posted by the Reviewer agent as its own comment)
+## 7. Review (the Reviewer's report, posted as a separate comment)
 **Summary:** <!-- First line. BLOCK count, WARN count. One sentence: merge-ready or not, and why. -->
 **Reviewed commit:** <!-- head SHA. A review of an older commit does not count. -->
 **Reviewer:** <!-- run ID, pinned model ID -->
@@ -81,7 +81,7 @@ Copy everything below the line, down to the end of section 6.
 **Other observations (max 3, non-blocking):**
 -
 
-## 8. Verification (posted by the Verifier agent as its own comment)
+## 8. Verification (the Verifier's verdict, posted as a separate comment)
 **Verdict:** PASS / FAIL
 **Verified commit:** <!-- head SHA -->
 **Verifier:** <!-- run ID, pinned model ID, run n of max_verifier_runs_per_pr -->
