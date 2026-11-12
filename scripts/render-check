@@ -14,7 +14,7 @@ cd "$dest"
 
 for f in .copier-answers.yml AGENTS.md README.md .github/CODEOWNERS factory/project.yaml \
   factory/change-classes.yaml factory/REVIEW_CHECKLIST.md factory/PR_REPORT_TEMPLATE.md factory/SPEC_TEMPLATE.md \
-  factory/FAILURE_TAXONOMY.md; do
+  factory/FAILURE_TAXONOMY.md .github/workflows/reviewer.yml .github/workflows/gates.yml; do
   [ -s "$f" ] || fail "missing or empty in the created product: $f"
 done
 [ -z "$(find . -name '*.jinja' -not -path './node_modules/*')" ] || fail "a .jinja file was copied instead of rendered"
