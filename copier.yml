@@ -55,3 +55,6 @@ _tasks:
   - ["cp", "{{ _copier_conf.src_path }}/factory/SPEC_TEMPLATE.md", "factory/SPEC_TEMPLATE.md"]
   - ["cp", "{{ _copier_conf.src_path }}/factory/FAILURE_TAXONOMY.md", "factory/FAILURE_TAXONOMY.md"]
   - ["cp", "{{ _copier_conf.src_path }}/factory/THIRD_PARTY_NOTICES.md", "factory/THIRD_PARTY_NOTICES.md"]
+  # The Reviewer is the same for every template, so products get the factory's own copy.
+  - ["mkdir", "-p", ".github/workflows"]
+  - ["cp", "{{ _copier_conf.src_path }}/.github/workflows/reviewer.yml", ".github/workflows/reviewer.yml"]
