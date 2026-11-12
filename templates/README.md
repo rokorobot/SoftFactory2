@@ -32,7 +32,7 @@ pipx install copier==9.19.1
 copier copy --trust gh:rokorobot/SoftFactory2 <new-folder>
 ```
 
-Copier asks for the template, the product name and the code owner's GitHub handle. It copies the template, fills in the name and owner, and adds the policy files from `factory/`. No LLM takes part. `--trust` is needed because Copier runs the copy commands listed in `copier.yml`.
+Copier asks for the template, the product name and the code owner's GitHub handle. It copies the template, fills in the name and owner, adds the policy files from `factory/`, and adds the Reviewer workflow (`.github/workflows/reviewer.yml`). The Reviewer only runs once the product repo has a `CLAUDE_CODE_OAUTH_TOKEN` or `ANTHROPIC_API_KEY` secret. No LLM takes part. `--trust` is needed because Copier runs the copy commands listed in `copier.yml`.
 
 ## Keeping a product in sync
 
