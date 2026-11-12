@@ -7,7 +7,9 @@
 # one product (paths, commands, thresholds) lives in factory/project.yaml, one per product repo.
 #
 # Autonomy levels:
-#   L0  Agents do not open PRs in this class. Humans write; the Reviewer may still report.
+#   L0  Agents do not open PRs in this class on their own. Humans write; the Reviewer may still report.
+#       Exception: an agent may open one when a human owner asked for that specific change.
+#       The PR report says who asked and when, and a human still decides the merge.
 #   L1  Agent opens PR. Human reads the report AND the diff, then merges.
 #   L2  Agent opens PR. Human reads the report; reads the diff only if a gate or the report flags it.
 #   L3  Auto-merge when every gate passes. Covered by the weekly random audit.
@@ -19,7 +21,7 @@
 #      assigned (lint-fix, refactor, or feature). With none assigned, it is `feature`. (fail closed)
 #   3. A manifest change that adds a package is `deps-new`, not `deps-update`.
 #   4. The PR's class is the highest-risk class of any file. Risk order, low to high, is the
-#      order of `classes` below.
+#      order of `classes` below. A PR of one class may also contain files of lower-risk classes.
 #   5. Gates: the union of the gates of every class matched. Approvers: the highest number.
 #      Autonomy: the lowest level.
 #   6. If Triage assigned a lower-risk class than the one derived, `classify` fails.
@@ -125,6 +127,7 @@ demotion:
     - a merged PR in this class is reverted for a defect
     - a production incident is traced to a PR in this class
     - a weekly audit finds a BLOCK-level problem the Reviewer passed
+    - a critical failure class (gate-tampering, policy, damage; see FAILURE_TAXONOMY.md) is found in a PR in this class, merged or not, and confirmed by a deterministic gate or a human
   error_budget:
     # Agent merges pause for ALL classes when either count is reached in a rolling 7 days:
     pause_at_reverts: 2
