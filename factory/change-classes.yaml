@@ -122,7 +122,10 @@ demotion:
   # Any ONE trigger drops the class one level, floor L0, until a human re-promotes it.
   # How it takes effect at once, without anyone editing this file: the trigger is recorded as an
   # open issue labelled `demote:<class>`. CI treats the class as one level lower per open issue.
-  # Anyone, agents included, may open one. Only a code owner may close one; CI checks who did.
+  # Anyone, agents included, may open one. One opened by a deterministic gate or a human takes
+  # effect at once. One opened by an agent on its own judgement, the Reviewer included, takes
+  # effect only when a code owner adds the `confirmed` label: judges are advisory.
+  # Only a code owner may close one; CI checks who did.
   triggers:
     - a merged PR in this class is reverted for a defect
     - a production incident is traced to a PR in this class
@@ -232,7 +235,7 @@ classes:
     paths: [factory]
     max_diff_lines: 500        # owner decision 2026-11-11. Policy files cross-reference each other and a human always reads them.
     gates: [base]
-    notes: L0 now. At L1 only the weekly Harness Improver may propose. A human always merges.
+    notes: L0 now, so only owner-requested PRs. At L1 the weekly Harness Improver may also propose on its own. A human always merges.
 
 # Change log: date, class, old -> new level, evidence link.
 history: []
