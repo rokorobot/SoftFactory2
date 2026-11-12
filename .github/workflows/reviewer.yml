@@ -87,24 +87,41 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           SELF: ${{ github.workflow }}
         run: |
+          # Done when at least one other check exists and none is pending on two polls in a row,
+          # so a workflow that registers its check a little late is not missed.
           started=$(date +%s)
+          settled=0
           while :; do
             elapsed=$(( $(date +%s) - started ))
-            # Every check on the PR except this workflow's own jobs.
+            total=0 pending=0
+            # Judged by the output, not the exit code: gh's exit codes differ between versions and modes.
+            set +e
             counts=$(gh pr checks "$PR" --repo "$GITHUB_REPOSITORY" --json bucket,workflow \
               --jq '[.[] | select(.workflow != env.SELF)] | "\(length) \([.[] | select(.bucket == "pending")] | length)"' \
-              2>/dev/null || echo "0 0")
-            read -r total pending <<< "$counts"
-            if [ "$total" -gt 0 ] && [ "$pending" -eq 0 ]; then
-              echo "CI finished after ${elapsed}s: $total checks."
-              break
+              2> checks.err)
+            rc=$?
+            set -e
+            if [[ "$counts" =~ ^[0-9]+\ [0-9]+$ ]]; then
+              read -r total pending <<< "$counts"
+            elif ! grep -q "no checks reported" checks.err; then
+              echo "::warning::Could not read the PR's checks (exit $rc); trying again. $(cat checks.err)"
+              pending=1
             fi
-            if [ "$total" -eq 0 ] && [ "$elapsed" -ge 180 ]; then
-              echo "No other checks appeared within 3 minutes; reviewing without CI results."
+            if [ "$total" -gt 0 ] && [ "$pending" -eq 0 ]; then
+              settled=$(( settled + 1 ))
+              if [ "$settled" -ge 2 ]; then
+                echo "CI finished after ${elapsed}s: $total checks."
+                break
+              fi
+            else
+              settled=0
+            fi
+            if [ "$total" -eq 0 ] && [ "$pending" -eq 0 ] && [ "$elapsed" -ge 90 ]; then
+              echo "::warning::No other checks appeared within 90 seconds; reviewing without CI results."
               break
             fi
             if [ "$elapsed" -ge 1500 ]; then
-              echo "::warning::CI still running after 25 minutes ($pending of $total pending); reviewing anyway."
+              echo "::warning::CI not finished after 25 minutes ($pending of $total pending, or unreadable); reviewing anyway."
               break
             fi
             sleep 20
