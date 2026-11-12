@@ -1,7 +1,9 @@
 # The Reviewer agent (preplan Layer 3). Runs factory/REVIEW_CHECKLIST.md on every PR and posts a report.
 #
 # How it is boxed in:
-# - (trigger note added in the next commit)
+# - It runs on pull_request_target, so GitHub takes this file from the base branch. A PR that edits
+#   this workflow, the prompt or the checklist is still judged by the versions already on main.
+#   (Running it by hand from a branch is possible, and needs write access to the repository.)
 # - Two jobs. `review` runs the agent with a read-only token. `post` holds the only write
 #   permission, never runs the agent, and never checks out code.
 # - The criteria come from the base branch, not from the PR.
@@ -14,7 +16,7 @@
 name: reviewer
 
 on:
-  pull_request: # TEMPORARY for testing on this PR; the next commit switches to pull_request_target
+  pull_request_target:
     types: [opened, synchronize, reopened, ready_for_review]
   workflow_dispatch: # run by hand on one PR, e.g. to try a changed version of this file from a branch
     inputs:
@@ -64,13 +66,19 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh pr view "$PR" --repo "$GITHUB_REPOSITORY" --json headRefOid,baseRefName,isCrossRepository,state > pr-facts.json
+          gh pr view "$PR" --repo "$GITHUB_REPOSITORY" --json headRefOid,baseRefName,isCrossRepository > pr-facts.json
           if [ "$(jq -r .isCrossRepository pr-facts.json)" != false ]; then
             echo "::error::PR #$PR comes from a fork. The Reviewer only runs on branches of this repository."
             exit 1
           fi
-          echo "head_sha=$(jq -er .headRefOid pr-facts.json)" >> "$GITHUB_OUTPUT"
-          echo "base_ref=$(jq -er .baseRefName pr-facts.json)" >> "$GITHUB_OUTPUT"
+          head_sha=$(jq -er .headRefOid pr-facts.json)
+          base_ref=$(jq -er .baseRefName pr-facts.json)
+          if ! [[ "$head_sha" =~ ^[0-9a-f]{40}$ ]] || [ -z "$base_ref" ]; then
+            echo "::error::Could not read the head commit or base branch of PR #$PR."
+            exit 1
+          fi
+          echo "head_sha=$head_sha" >> "$GITHUB_OUTPUT"
+          echo "base_ref=$base_ref" >> "$GITHUB_OUTPUT"
 
       - name: Check out the base branch (trusted)
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -114,7 +122,12 @@ jobs:
               exit 1
               ;;
           esac
-          echo "checklist_sha=$(git log -1 --format=%H -- factory/REVIEW_CHECKLIST.md)" >> "$GITHUB_OUTPUT"
+          checklist_sha=$(git log -1 --format=%H -- factory/REVIEW_CHECKLIST.md)
+          if ! [[ "$checklist_sha" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::factory/REVIEW_CHECKLIST.md is missing from the base branch."
+            exit 1
+          fi
+          echo "checklist_sha=$checklist_sha" >> "$GITHUB_OUTPUT"
 
       - name: Review
         id: review
