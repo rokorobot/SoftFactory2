@@ -43,7 +43,7 @@ jobs:
       (github.event.pull_request.draft == false &&
        github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 45 # up to 25 waiting for CI, then the review
     permissions:
       contents: read
       pull-requests: read
@@ -79,6 +79,36 @@ jobs:
           fi
           echo "head_sha=$head_sha" >> "$GITHUB_OUTPUT"
           echo "base_ref=$base_ref" >> "$GITHUB_OUTPUT"
+
+      - name: Wait for the PR's CI to finish
+        # So the report can cite real gate results instead of "pending". The wait is capped; if CI
+        # is still running at the cap, the review goes ahead and reports the pending checks as such.
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SELF: ${{ github.workflow }}
+        run: |
+          started=$(date +%s)
+          while :; do
+            elapsed=$(( $(date +%s) - started ))
+            # Every check on the PR except this workflow's own jobs.
+            counts=$(gh pr checks "$PR" --repo "$GITHUB_REPOSITORY" --json bucket,workflow \
+              --jq '[.[] | select(.workflow != env.SELF)] | "\(length) \([.[] | select(.bucket == "pending")] | length)"' \
+              2>/dev/null || echo "0 0")
+            read -r total pending <<< "$counts"
+            if [ "$total" -gt 0 ] && [ "$pending" -eq 0 ]; then
+              echo "CI finished after ${elapsed}s: $total checks."
+              break
+            fi
+            if [ "$total" -eq 0 ] && [ "$elapsed" -ge 180 ]; then
+              echo "No other checks appeared within 3 minutes; reviewing without CI results."
+              break
+            fi
+            if [ "$elapsed" -ge 1500 ]; then
+              echo "::warning::CI still running after 25 minutes ($pending of $total pending); reviewing anyway."
+              break
+            fi
+            sleep 20
+          done
 
       - name: Check out the base branch (trusted)
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
