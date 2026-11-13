@@ -111,9 +111,9 @@ The factory repo holds the agents, skills, gates, and templates. Each product li
 - **Self-improvement:** the factory is its own target. The harness improver (Layer 3) is controlled by a switch with three positions:
   - `off` (default): it does nothing.
   - `propose`: it reads failed runs and reverted PRs and opens PRs. A human merges every one.
-  - `auto`: low-risk changes to skills and prompt wording merge after passing the gates. Everything else stays at `propose`.
+  - `auto`: low-risk changes to skills and prompt wording merge after passing the gates. Everything else stays at `propose`. This needs a narrow exception to the `factory` class (which says a human always merges), added by a human PR to `factory/change-classes.yaml`. Until that exception exists, `auto` behaves as `propose`.
   - Turning it on fails closed: the factory refuses to enable it until the rollout stage 3 exit criteria hold, because the improver has nothing to learn from without run history.
-  - The switch is human-owned in `factory/` (CODEOWNERS), so the factory cannot raise its own setting.
+  - The switch is a key in `factory/change-classes.yaml`, which is human-owned (CODEOWNERS), so the factory cannot raise its own setting.
   - It drops back one position on its own after a self-made change is reverted or breaks the error budget.
   - Gates, run caps, CODEOWNERS, change-class policy, and the switch itself are always human-merged, in every position. Without this rule, self-improvement becomes self-loosening.
 
@@ -144,7 +144,7 @@ The factory repo holds the agents, skills, gates, and templates. Each product li
 | Reviewer | PR opened | Runs `REVIEW_CHECKLIST.md` systematically. Posts structured report. Advisory. | No |
 | Janitors (scheduled) | Cron | Dead code, dep updates, lint-rule migration, flaky test quarantine, doc drift, template sync. One concern per janitor. | PRs only, low-risk class |
 | On-call | Alert | Reads logs/metrics, posts interim findings, may open a PR. Never deploys. | PR only |
-| Harness improver (scheduled, weekly) | Cron | Reads failed runs and reverted PRs, proposes new guides/sensors as PRs to `factory/`. | PR to `factory/`, human merges |
+| Harness improver (scheduled, weekly) | Cron | Reads failed runs and reverted PRs, proposes new guides/sensors as PRs to `factory/`. | PR to `factory/`, human merges (see the self-improvement switch in Layer 0) |
 
 Orchestration: GitHub Actions for triggers and gates. The Reviewer runs through claude-code-action. Scheduled agents run as GitHub Agentic Workflows; Claude Code routines or Cloudroom Loops remain the fallback. Add Temporal only when you need durable multi-step workflows with retries across days. Do not build a custom orchestrator early.
 
