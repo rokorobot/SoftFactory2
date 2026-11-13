@@ -30,13 +30,25 @@
 # file, citing the promotion evidence. (Staltz #13: premature automation is the root of all evil.)
 
 version: 2
-updated: 2026-11-11
+updated: 2026-11-13
 
 # DEVIATION from preplan 1.5, which says the requester can never approve. With one human on the
 # team that rule lets nothing merge. While true: approvers_required is capped at 1, and the human
 # who asked for a change may approve it. The authoring agent never counts, in either mode.
 # Pending the owner's decision. Set to false as soon as a second human joins.
 solo_mode: true
+
+# Self-improvement switch (preplan Layer 0, "Operating modes"). Controls the Harness Improver.
+#   off      it does nothing. Values are strings: always quote them.
+#   propose  it reads failed runs and reverted PRs and opens `factory`-class PRs. A human merges each.
+#   auto     not usable yet: needs a narrow exception to the `factory` class, added by a human PR.
+#            Until that exception exists, `auto` is handled as `propose`.
+# Fails closed: an unknown value is handled as `off`, and so is any value above `off` until the
+# preplan's rollout stage 3 exit criteria hold. One open `demote:self-improvement` issue drops it one position (see `demotion`).
+# The `factory` class rules still apply in every position: this switch never lets a change merge
+# without a human.
+self_improvement:
+  mode: "off"                  # quoted: unquoted off is boolean false in YAML 1.1. Owner decision 2026-11-13
 
 defaults:
   max_diff_lines: 400          # added + removed, excluding paths.generated and paths.lockfiles
