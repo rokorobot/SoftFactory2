@@ -45,9 +45,9 @@ solo_mode: true
 #            Until that exception exists, `auto` is handled as `propose`.
 # Fails closed: an unknown value is handled as `off`, and so is any value above `off` until the
 # preplan's rollout stage 3 exit criteria hold.
-# Drops one position, floor `off`, until a human raises it again, when either happens (preplan
-# Layer 0): a merged change the Harness Improver made is reverted for a defect, or the `demotion`
-# error budget pauses agent merges. Recorded as an open issue labelled `demote:self-improvement`.
+# Drops one position, floor `off`, until a human raises it again, when a merged change the Harness
+# Improver made is reverted for a defect, or counts toward a `demotion` error-budget pause (preplan
+# Layer 0: "a self-made change is reverted or breaks the error budget"). Recorded as an open issue labelled `demote:self-improvement`.
 # Those issues follow the same opening, confirmation and closing rules as `demote:<class>` issues
 # in `demotion`, although `self-improvement` is not a class.
 # The `factory` class rules still apply in every position: this switch never lets a change merge
