@@ -75,7 +75,7 @@ Do not reinvent what a major open-source project already maintains. Checked on G
 | Specs with requirement IDs | GitHub Spec Kit's spec template (github/spec-kit): `FR-001` requirements, Given/When/Then scenarios, "needs clarification" markers | Approved |
 | Running the Reviewer on PRs | anthropics/claude-code-action | Approved |
 | Creating a product from a template, and keeping it in sync | Copier (copier-org/copier): `copier copy`, then `copier update` | Approved |
-| Scheduled agents and triggers | GitHub Agentic Workflows (github/gh-aw): Markdown compiled to a GitHub Action; the agent is read-only and sandboxed, and writes go through validated "safe outputs" | Approved, from rollout weeks 5-6 |
+| Scheduled agents and triggers | GitHub Agentic Workflows (github/gh-aw): Markdown compiled to a GitHub Action; the agent is read-only and sandboxed, and writes go through validated "safe outputs" | Approved, from rollout stage 3 |
 | Skills | Agent Skills spec (agentskills/agentskills): a folder with a `SKILL.md` | Proposed |
 | Dependency updates | Dependabot or Renovate, instead of an agent | Proposed |
 | Pinned environments (Layer 2) | Dev Containers spec | Proposed, later |
@@ -104,6 +104,19 @@ Not adopted: whole systems with their own way of working (Gas Town, BMAD, OpenHa
 - Build one template first. Add the next only when a real product needs it; a template no product has shipped on is untested.
 - A scheduled agent runs `copier update` in each product repo and opens the PR. This answers Böckeler's versioning warning.
 
+**Operating modes: three ways to point the factory at work**
+The factory repo holds the agents, skills, gates, and templates. Each product lives in its own repo with a small `factory/` folder (`project.yaml`, checklist overrides).
+- **New product:** Copier creates a repo from a template (above). The product passes Layer 0 on day one and starts at rollout stage 1.
+- **Existing repo:** the factory audits it against the Layer 0 table and opens one PR per gap: `factory/project.yaml`, gates, `scripts/test-changed`, boundary lint. The product's stack is kept, not replaced by a template. The repo starts at rollout stage 0 and moves on only when the stage 0 exit criteria hold.
+- **Self-improvement:** the factory is its own target. The harness improver (Layer 3) is controlled by a switch with three positions:
+  - `off` (default): it does nothing.
+  - `propose`: it reads failed runs and reverted PRs and opens PRs. A human merges every one.
+  - `auto`: low-risk changes to skills and prompt wording merge after passing the gates. Everything else stays at `propose`. This needs a narrow exception to the `factory` class (which says a human always merges), added by a human PR to `factory/change-classes.yaml`. Until that exception exists, `auto` behaves as `propose`.
+  - Turning it on fails closed: the factory refuses to enable it until the rollout stage 3 exit criteria hold, because the improver has nothing to learn from without run history.
+  - The switch is a key in `factory/change-classes.yaml`, which is human-owned (CODEOWNERS), so the factory cannot raise its own setting.
+  - It drops back one position on its own after a self-made change is reverted or breaks the error budget.
+  - Gates, run caps, CODEOWNERS, change-class policy, and the switch itself are always human-merged, in every position. Without this rule, self-improvement becomes self-loosening.
+
 ### Layer 1. Instructions (the "source code" of the factory)
 - `AGENTS.md` / `CLAUDE.md` at repo root: short, only what the agent cannot infer from the code. Build/test commands, hard rules, what never to touch. Over-specified files degrade performance (Anthropic).
 - `skills/` directory: one skill per repeatable procedure (release, migration, perf check, PR report format). Skills are versioned and reviewed in PRs like code.
@@ -131,7 +144,7 @@ Not adopted: whole systems with their own way of working (Gas Town, BMAD, OpenHa
 | Reviewer | PR opened | Runs `REVIEW_CHECKLIST.md` systematically. Posts structured report. Advisory. | No |
 | Janitors (scheduled) | Cron | Dead code, dep updates, lint-rule migration, flaky test quarantine, doc drift, template sync. One concern per janitor. | PRs only, low-risk class |
 | On-call | Alert | Reads logs/metrics, posts interim findings, may open a PR. Never deploys. | PR only |
-| Harness improver (scheduled, weekly) | Cron | Reads failed runs and reverted PRs, proposes new guides/sensors as PRs to `factory/`. | PR to `factory/`, human merges |
+| Harness improver (scheduled, weekly) | Cron | Reads failed runs and reverted PRs, proposes new guides/sensors as PRs to `factory/`. | PR to `factory/`, human merges (see the self-improvement switch in Layer 0) |
 
 Orchestration: GitHub Actions for triggers and gates. The Reviewer runs through claude-code-action. Scheduled agents run as GitHub Agentic Workflows; Claude Code routines or Cloudroom Loops remain the fallback. Add Temporal only when you need durable multi-step workflows with retries across days. Do not build a custom orchestrator early.
 
@@ -163,13 +176,24 @@ Order of execution, cheapest first:
 
 ## Part 3. Rollout order (Staltz #13 applied)
 
-1. **Week 1-2:** Layer 0 (the first template, and the first product repo created from it) and Layer 1. No autonomy yet. Run the Reviewer agent on human PRs only. Tune the checklist and report until you trust it.
-2. **Week 3-4:** Implementer on the lowest-risk change class (docs, tests, lint fixes) with full human review. Record every mistake into guides/sensors.
-3. **Week 5-6:** Add Verifier and holdout scenarios. Add the first two janitors (deps, dead code). Measure acceptance rate.
-4. **Week 7-8:** Promote one more change class. Add twins for the top incident-causing integration. Add provenance and the dashboard.
-5. **Ongoing:** promote or demote classes on evidence. Weekly harness-improver run. Never skip the weekly human audit.
+Stages are gated by evidence, not by calendar. A stage opens only when every exit criterion of the stage before it holds, however long that takes. Each product repo moves through the stages on its own. A class or repo moves back a stage after an incident.
 
-Stop condition at every step: if a run fails because the environment is wrong, fix the environment, do not patch the prompt.
+| Stage | Build | Exit criteria (all must hold to move on) |
+|---|---|---|
+| **0. Harnessable codebase** | Layer 0: the first template, and the first product repo created from it (or an existing repo adopted) | Format, lint, type check, and filtered tests run green in a fresh sandbox with one command, in under 2 minutes |
+| **1. Instructions + Reviewer** | Layer 1. Run log from the first run: one JSON line per run (run ID, pinned model, skill version, class, tokens, cost, outcome). Reviewer on human PRs only. No autonomy. | Reviewer findings match the human's own review on N consecutive PRs (e.g. 10), with no important misses |
+| **2. Implementer, lowest-risk class** | Implementer on docs, tests, lint fixes, with full human review | N PRs accepted with only minor edits; every recorded mistake has become a guide or sensor |
+| **3. Verifier + first janitors** | Verifier with holdout scenarios; the first two janitors (deps, dead code) | The Verifier caught at least one real defect the Implementer's tests missed; janitor PR acceptance is above threshold |
+| **4. Promote a class + observability** | One more change class, twins for the top incident-causing integration, provenance, and the dashboard (the first UI) | The promoted class meets its error budget over N changes |
+| **5. Ongoing** | Promote or demote classes on evidence. Weekly harness-improver run, if its switch is on. Never skip the weekly human audit. | n/a |
+
+N and the thresholds are set in `factory/change-classes.yaml`, not here.
+
+**When to build the dashboard:** at stage 4, and only when both hold:
+1. The run log has enough accepted and rejected changes for the metrics to be stable.
+2. Someone keeps answering the same question by hand from the run log. That repeated query defines the first screen.
+
+Stop condition at every stage: if a run fails because the environment is wrong, fix the environment, do not patch the prompt.
 
 ---
 
