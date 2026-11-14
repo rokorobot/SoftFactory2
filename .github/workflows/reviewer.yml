@@ -4,8 +4,9 @@
 # - It runs on pull_request_target, so GitHub takes this file from the base branch. A PR that edits
 #   this workflow, the prompt or the checklist is still judged by the versions already on main.
 #   (Running it by hand from a branch is possible, and needs write access to the repository.)
-# - Two jobs. `review` runs the agent with a read-only token. `post` holds the only write
-#   permission, never runs the agent, and never checks out code.
+# - Three jobs. `review` runs the agent with a read-only token. `post` (pull-requests: write) and
+#   `log` (contents: write, pushes only to the run-log branch) hold the only write permissions,
+#   never run the agent, and never check out PR code.
 # - The criteria come from the base branch, not from the PR.
 # - Everything from the PR is handed over as data: files in review-input/, and its code in a
 #   folder outside the working directory, so its CLAUDE.md and AGENTS.md are not loaded as instructions.
