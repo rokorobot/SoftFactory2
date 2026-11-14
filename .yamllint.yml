@@ -1,0 +1,12 @@
+# YAML gate for the factory repo (CI: .github/workflows/yaml.yml). Humans own this file (CODEOWNERS).
+# Only rules that catch wrong meaning, not style. Syntax errors always fail.
+# truthy: an unquoted on/off/yes/no is a boolean in YAML 1.1 readers such as PyYAML, so
+# `mode: off` would read as false. Quote such values. Keys are not checked: workflows use `on:`.
+rules:
+  key-duplicates: enable
+  truthy:
+    allowed-values: ["true", "false"]
+    check-keys: false
+ignore: |
+  node_modules/
+  *.jinja

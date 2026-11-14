@@ -26,7 +26,7 @@ paths:
   generated: []                 # excluded from diff size. Listed here, not in .gitattributes, so agents cannot extend it.
   migrations: []
   infra: [".github/**"]
-  sensor_config: ["scripts/**"] # add linter, type-checker and test-runner config when a stack is chosen
+  sensor_config: ["scripts/**", ".yamllint.yml"] # add linter, type-checker and test-runner config when a stack is chosen
   flag_config: []
   security_sensitive: []
   factory: ["factory/**", "templates/**", "copier.yml", ".github/CODEOWNERS", "AGENTS.md", "CLAUDE.md", "skills/**"]

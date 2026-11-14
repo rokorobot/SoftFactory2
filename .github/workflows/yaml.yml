@@ -1,0 +1,29 @@
+# YAML gate: every YAML file in the factory repo must parse, have no duplicate keys, and quote
+# values a YAML 1.1 reader would turn into booleans. Rules: .yamllint.yml.
+# The linter is pinned, and runs here in CI, so a missing local tool is never a reason to improvise.
+name: yaml
+
+on:
+  pull_request:
+    paths: ["**/*.yml", "**/*.yaml", ".yamllint.yml"]
+  push:
+    branches: [main]
+    paths: ["**/*.yml", "**/*.yaml", ".yamllint.yml"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: yaml-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  yamllint:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Lint every YAML file
+        run: pipx run --spec yamllint==1.38.0 yamllint --strict -c .yamllint.yml .
