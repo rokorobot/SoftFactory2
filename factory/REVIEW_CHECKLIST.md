@@ -31,7 +31,7 @@ What a verdict does is defined in `change-classes.yaml` under "Judges". In short
 - **Applies to**: `all`; `code` = every class except `docs`, `specs` and `tests`; or the classes named.
 - **Source**: `CI` = a deterministic gate decides. Copy its result and link it; do not re-derive it. If the gate is not built yet, do the check by hand and say so in the evidence. `LLM` = you judge.
 
-## Human-authored PRs (rollout weeks 1-2)
+## Human-authored PRs (rollout stages 0-1)
 There is no factory report and often no spec. The PR description is the ask for A1 and A2. C1 applies only if the PR names requirement IDs. G3 and G4 are left out.
 
 ---

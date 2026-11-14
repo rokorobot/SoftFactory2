@@ -8,7 +8,7 @@ version: 1
 project: SoftFactory2   # this repo holds the factory itself; no application code yet
 
 # Layer 0 of the preplan. "Software in general" still means harnessable software: agents write
-# no code in a repo until every line here is filled in (preplan Part 3, weeks 1-2).
+# no code in a repo until every line here is filled in (preplan Part 3, stage 0).
 layer0:
   language: ""               # strictly typed: TypeScript strict, Go, Rust, or Python with pyright strict
   structural_lint: ""        # dependency-cruiser, ArchUnit, import-linter, or equivalent

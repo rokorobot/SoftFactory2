@@ -160,7 +160,7 @@ classes:
     paths: [docs]
     max_diff_lines: 600
     gates: [base]
-    notes: Lowest risk. First class the Implementer works on (rollout weeks 3-4).
+    notes: Lowest risk. First class the Implementer works on (rollout stage 2).
 
   - name: tests
     autonomy: L1
