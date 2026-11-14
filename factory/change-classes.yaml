@@ -107,7 +107,8 @@ gates:
 #     owner overrides it in writing on the PR.
 #   WARN item FAIL or UNSURE: the PR is handled as L1; a code owner accepts it in writing.
 #   So L3 auto-merge needs zero FAIL and zero UNSURE on BLOCK and WARN items.
-#   Every override is recorded as a judge false positive (calibration data).
+#   An override because the judge was wrong is labelled `reviewer-false-block` (calibration data).
+#   An override that accepts a risk the judge correctly found is not a false positive.
 
 gate_sets:
   base:     [classify, provenance, secret_scan, diff_size, format, lint, reviewer_report]
@@ -146,7 +147,9 @@ stages:
     min_janitor_acceptance: 0.7    # janitor PRs merged, out of those opened
   stage_4:   # one more class promoted + observability
     window_promoted_class_prs: 20  # merged PRs in the newly promoted class
-    max_error_budget_pauses: 0     # in that window (see demotion.error_budget)
+    max_error_budget_pauses: 0     # in that window, pauses (demotion.error_budget) to which a revert or
+                                   # incident of a PR in the promoted class counted. Pauses caused only by
+                                   # other classes do not count against it.
 
 stage_history: []                  # date, repo, from -> to stage, evidence links
 
