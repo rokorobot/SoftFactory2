@@ -9,3 +9,4 @@
 /scripts/           @rokorobot
 /templates/         @rokorobot
 /copier.yml         @rokorobot
+/.yamllint.yml      @rokorobot
